@@ -1,0 +1,7 @@
+_storage/
+lib/
+node_modules/
+coverage/
+.idea/
+
+npm-debug.log*

@@ -1,0 +1,22 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@4.7.0
+
+jobs:
+  test:
+    docker:
+      - image: 'node:lts-alpine'
+    steps:
+      - checkout
+      - node/install-packages
+      - run:
+          command: npm run test
+      # https://circleci.com/docs/2.0/collect-test-data
+      - store_test_results:
+          path: ./coverage/
+
+workflows:
+  test:
+    jobs:
+      - test
