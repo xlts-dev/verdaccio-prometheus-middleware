@@ -1,0 +1,13 @@
+src/
+test/
+
+.babelrc
+.editorconfig
+.eslintignore
+.eslintrc
+.gitignore
+.npmignore
+metrics.ts
+jest.config.js
+README.md
+tsconfig.json
