@@ -1,7 +1,7 @@
 import chanceJs from 'chance';
 import { register } from 'prom-client';
 import { Application } from 'express';
-import { IBasicAuth, IStorageManager } from '@verdaccio/types';
+import { IBasicAuth, IStorageManager, PluginOptions } from '@verdaccio/types';
 
 import MetricsPlugin, { REQUEST_COUNTER_OPTIONS } from '../src';
 import { MetricsConfig } from '../types';
@@ -24,17 +24,41 @@ const getMetricsJson = (values) => [
 describe('Metrics Plugin', () => {
   describe('should register middleware (metrics enabled)', () => {
     const logger = getLogger();
-    const app = { use: jest.fn(), get: jest.fn() } as unknown as Application;
+    const app = { get: jest.fn() } as unknown as Application;
 
     beforeAll(() => {
       register.clear();
-      const metricsPlugin = new MetricsPlugin({ enabled: true } as MetricsConfig, { logger });
+      const metricsPlugin = new MetricsPlugin(
+        { enabled: true } as MetricsConfig,
+        { logger } as PluginOptions<MetricsConfig>
+      );
       metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
     });
 
     test('should invoke the correct express API calls', () => {
-      expect(app.use).toHaveBeenCalledTimes(1);
-      expect(app.get).toHaveBeenCalledTimes(1);
+      expect(app.get).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('should register middleware (metrics disabled)', () => {
+    const logger = getLogger();
+    const app = { get: jest.fn() } as unknown as Application;
+
+    beforeAll(() => {
+      register.clear();
+      const metricsPlugin = new MetricsPlugin(
+        { enabled: false } as MetricsConfig,
+        { logger } as PluginOptions<MetricsConfig>
+      );
+      metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
+    });
+
+    test('should not invoke any express API', () => {
+      expect(app.get).toHaveBeenCalledTimes(0);
+    });
+
+    test('should log warn that metrics are disabled', () => {
+      expect(logger.warn).toHaveBeenCalledWith('metrics: [register_middlewares] metrics are disabled');
     });
   });
 
@@ -43,7 +67,10 @@ describe('Metrics Plugin', () => {
 
     beforeAll(() => {
       register.clear();
-      const metricsPlugin = new MetricsPlugin({ enabled: true } as MetricsConfig, { logger: getLogger() });
+      const metricsPlugin = new MetricsPlugin(
+        { enabled: true } as MetricsConfig,
+        { logger: getLogger() } as PluginOptions<MetricsConfig>
+      );
       metricsPlugin.collectMetrics(req, res, next);
       metricsPlugin.getMetrics(req, res);
     });
@@ -82,13 +109,15 @@ describe('Metrics Plugin', () => {
 
     beforeAll(() => {
       register.clear();
-      metricsPlugin = new MetricsPlugin({ enabled: true } as MetricsConfig, { logger: getLogger() });
+      metricsPlugin = new MetricsPlugin(
+        { enabled: true } as MetricsConfig,
+        { logger: getLogger() } as PluginOptions<MetricsConfig>
+      );
       expressMocks.forEach(({ req, res, next }) => metricsPlugin.collectMetrics(req, res, next));
     });
 
     test('should invoke the correct express API calls', () => {
-      expressMocks.forEach(({ res, next }) => {
-        expect(res.once).toHaveBeenCalledTimes(1);
+      expressMocks.forEach(({ next }) => {
         expect(next).toHaveBeenCalledTimes(1);
       });
     });
@@ -132,13 +161,15 @@ describe('Metrics Plugin', () => {
 
     beforeAll(() => {
       register.clear();
-      metricsPlugin = new MetricsPlugin({ enabled: true, packageGroups } as MetricsConfig, { logger: getLogger() });
+      metricsPlugin = new MetricsPlugin(
+        { enabled: true, packageGroups } as MetricsConfig,
+        { logger: getLogger() } as PluginOptions<MetricsConfig>
+      );
       expressMocks.forEach(({ req, res, next }) => metricsPlugin.collectMetrics(req, res, next));
     });
 
     test('should invoke the correct express API calls', () => {
-      expressMocks.forEach(({ res, next }) => {
-        expect(res.once).toHaveBeenCalledTimes(1);
+      expressMocks.forEach(({ next }) => {
         expect(next).toHaveBeenCalledTimes(1);
       });
     });
