@@ -1,11 +1,11 @@
 # verdaccio-metrics-middleware
-Metrics middleware plugin for Verdaccio. Collects metrics specifically for package install/download requests and
+Metrics middleware plugin for Verdaccio. Collects metrics specifically for package tarball install/download requests and
 exposes them at a configurable metrics endpoint (defaults to `/-/metrics`). The metrics are produced in the standard
 [prometheus metrics text format](https://prometheus.io/docs/instrumenting/exposition_formats/#text-format-example).
 
 A [counter](https://prometheus.io/docs/concepts/metric_types/#counter) metric is used to track the number of package
-installs/downloads. The following [labels](https://prometheus.io/docs/practices/naming/#labels) are applied to _every_
-request:
+tarball installs/downloads. The following [labels](https://prometheus.io/docs/practices/naming/#labels) are applied to
+_every_ request:
 - `username` - The Verdaccio username of the user attempting to install/download a package. If the request is
   unauthenticated then the value `UNKNOWN` is used.
 - `userAgentName` - The name of the user agent the client used to make the request. It is derived from the `user-agent`

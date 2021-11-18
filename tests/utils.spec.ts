@@ -27,8 +27,7 @@ const userAgentNameTestCases = [
   { userAgentName: 'curl', userAgentVersion: '7.68.0', userAgentString: 'curl/7.68.0' },
   // Parsing of web browser user agent strings will almost always result in:
   //   `{ userAgentName: 'Mozilla', userAgentVersion: '5.0' }`
-  // A library could be used to better determine the actual browser but has been deemed unnecessary since a customer
-  // should never being making requests for packages using a browser.
+  // A library could be used to better determine the actual browser but has not been deemed necessary.
   {
     userAgentName: 'Mozilla',
     userAgentVersion: '5.0',

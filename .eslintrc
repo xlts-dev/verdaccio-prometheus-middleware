@@ -1,7 +1,7 @@
 {
   "extends": ["@verdaccio"],
   "rules": {
-    "no-case-declarations": "off",
+    "no-case-declarations": 0,
     "@typescript-eslint/ban-ts-ignore": 0,
     "@typescript-eslint/ban-ts-comment": 0
   }

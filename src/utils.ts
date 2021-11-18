@@ -2,7 +2,7 @@ import { Logger } from '@verdaccio/types';
 
 export const UNKNOWN = 'UNKNOWN';
 
-export const enum AuthType {
+export enum AuthType {
   jwt = 'jwt',
   password = 'password',
 }
@@ -37,7 +37,7 @@ export function getUsername(
         const username = Buffer.from(authValue.trim(), 'base64').toString('utf8').split(':').shift() || UNKNOWN;
         // The username is valid if it contains only ASCII characters. This covers the test case where the value is a
         // NON base 64 encoded string.
-        const usernameValid = /^[\x00-\x7F]*$/.test(username || ''); // eslint-disable-line no-control-regex
+        const usernameValid = /^[\x00-\x7F]*$/.test(username); // eslint-disable-line no-control-regex
         return {
           username: usernameValid ? username : UNKNOWN,
           authType: usernameValid ? AuthType.password : undefined,
