@@ -1,5 +1,5 @@
 module.exports = {
-  name: 'verdaccio-metrics-middleware',
+  name: 'verdaccio-prometheus-middleware',
   verbose: true,
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.ts', '!src/index.ts'],
