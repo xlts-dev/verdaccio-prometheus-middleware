@@ -1,4 +1,4 @@
-# verdaccio-metrics-middleware
+# verdaccio-prometheus-middleware
 Metrics middleware plugin for Verdaccio. Collects metrics specifically for package tarball install/download requests and
 exposes them at a configurable metrics endpoint (defaults to `/-/metrics`). The metrics are produced in the standard
 [prometheus metrics text format](https://prometheus.io/docs/instrumenting/exposition_formats/#text-format-example).
@@ -14,6 +14,14 @@ _every_ request:
 
 Optionally, an additional `packageGroup` label can be applied *if* a `packageGroups` option is added to the plugin
 configuration.
+
+## Installation
+Because of how Verdaccio loads plugins, you will need to install this package using an `npm` alias in your `package.json`:
+```json
+"dependencies": {
+  "verdaccio-metrics": "npm:@xlts.dev/verdaccio-prometheus-middleware"
+}
+```
 
 ## Configuration
 Complete configuration example:
