@@ -1,4 +1,4 @@
-import { register, Counter } from 'prom-client';
+import { collectDefaultMetrics, register, Counter } from 'prom-client';
 import { Logger, IPluginMiddleware, IBasicAuth, IStorageManager, PluginOptions } from '@verdaccio/types';
 import { Request, Response, NextFunction, Application } from 'express';
 
@@ -22,14 +22,16 @@ export const REQUEST_COUNTER_OPTIONS = {
 export default class VerdaccioMiddlewarePlugin implements IPluginMiddleware<MetricsConfig> {
   public logger: Logger;
   public metricsEnabled: boolean;
+  public collectDefaultMetrics: boolean;
   public metricsPath: string;
   public packageGroups: Record<string, string>;
   private requestsCounter = new Counter(REQUEST_COUNTER_OPTIONS);
 
   public constructor(config: MetricsConfig, options: PluginOptions<MetricsConfig>) {
     this.metricsEnabled = [true, 'true'].includes(config.metricsEnabled);
+    this.collectDefaultMetrics = [true, 'true'].includes(config.collectDefaultMetrics);
     this.metricsPath = config.metricsPath || '/-/metrics';
-    this.packageGroups = config.packageGroups || [];
+    this.packageGroups = config.packageGroups || {};
     this.logger = options.logger;
   }
 
@@ -48,6 +50,9 @@ export default class VerdaccioMiddlewarePlugin implements IPluginMiddleware<Metr
       this.logger.info(`metrics: [register_middlewares] metrics are enabled and exposed at '${this.metricsPath}'`);
       app.get(/.*[.]tgz$/i, this.collectMetrics.bind(this));
       app.get(this.metricsPath, this.getMetrics.bind(this));
+      if (this.collectDefaultMetrics) {
+        collectDefaultMetrics();
+      }
     } else {
       this.logger.warn('metrics: [register_middlewares] metrics are disabled');
     }
