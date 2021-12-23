@@ -7,6 +7,7 @@ import MetricsPlugin, { REQUEST_COUNTER_OPTIONS } from '../src';
 import { MetricsConfig } from '../src/types';
 import { AuthType, UNKNOWN } from '../src/utils';
 
+// @ts-ignore
 import { getExpressMocks, getRequestOptions, getLogger } from './testUtils';
 
 const chance = chanceJs();
