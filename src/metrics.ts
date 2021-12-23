@@ -2,8 +2,7 @@ import { register, Counter } from 'prom-client';
 import { Logger, IPluginMiddleware, IBasicAuth, IStorageManager, PluginOptions } from '@verdaccio/types';
 import { Request, Response, NextFunction, Application } from 'express';
 
-import { MetricsConfig, MetricsLabels } from '../types';
-
+import { MetricsConfig, MetricsLabels } from './types';
 import { getUsername, getUserAgentData } from './utils';
 
 export const REQUEST_COUNTER_OPTIONS = {

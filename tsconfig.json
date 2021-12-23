@@ -5,6 +5,7 @@
     "declaration": true,
     "noImplicitAny": false,
     "strict": true,
+    "rootDir": "src",
     "outDir": "lib",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -14,8 +15,6 @@
     ]
   },
   "include": [
-    "src/*.ts",
-    "types/*.ts",
-    "types/*.d.ts"
+    "src/**/*.ts"
   ]
 }

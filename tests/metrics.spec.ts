@@ -4,7 +4,7 @@ import { Application } from 'express';
 import { IBasicAuth, IStorageManager, PluginOptions } from '@verdaccio/types';
 
 import MetricsPlugin, { REQUEST_COUNTER_OPTIONS } from '../src';
-import { MetricsConfig } from '../types';
+import { MetricsConfig } from '../src/types';
 import { AuthType, UNKNOWN } from '../src/utils';
 
 import { getExpressMocks, getRequestOptions, getLogger } from './testUtils';
