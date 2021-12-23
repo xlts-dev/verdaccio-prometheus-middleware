@@ -1,6 +1,6 @@
 {
   "name": "@xlts.dev/verdaccio-prometheus-middleware",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Verdaccio middleware plugin used to collect prometheus compatible metrics",
   "keywords": [
     "verdaccio",
