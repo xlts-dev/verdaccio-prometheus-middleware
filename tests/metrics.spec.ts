@@ -208,4 +208,56 @@ describe('Metrics Plugin', () => {
       );
     });
   });
+
+  describe('should collect default prometheus metrics when `collectDefaultMetrics` is set to `true`', () => {
+    const { req, res, next } = getExpressMocks();
+    const app = { get: jest.fn() } as unknown as Application;
+
+    beforeAll(() => {
+      register.clear();
+      const metricsPlugin = new MetricsPlugin(
+        { metricsEnabled: true, collectDefaultMetrics: true } as MetricsConfig,
+        { logger: getLogger() } as PluginOptions<MetricsConfig>
+      );
+      metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
+      metricsPlugin.collectMetrics(req, res, next);
+      metricsPlugin.getMetrics(req, res);
+    });
+
+    test('should collect default prometheus metrics', async () => {
+      const metrics = await register.getMetricsAsJSON();
+      expect(metrics.map(({ name }) => name).sort()).toEqual([
+        'nodejs_active_handles',
+        'nodejs_active_handles_total',
+        'nodejs_active_requests',
+        'nodejs_active_requests_total',
+        'nodejs_eventloop_lag_max_seconds',
+        'nodejs_eventloop_lag_mean_seconds',
+        'nodejs_eventloop_lag_min_seconds',
+        'nodejs_eventloop_lag_p50_seconds',
+        'nodejs_eventloop_lag_p90_seconds',
+        'nodejs_eventloop_lag_p99_seconds',
+        'nodejs_eventloop_lag_seconds',
+        'nodejs_eventloop_lag_stddev_seconds',
+        'nodejs_external_memory_bytes',
+        'nodejs_gc_duration_seconds',
+        'nodejs_heap_size_total_bytes',
+        'nodejs_heap_size_used_bytes',
+        'nodejs_heap_space_size_available_bytes',
+        'nodejs_heap_space_size_total_bytes',
+        'nodejs_heap_space_size_used_bytes',
+        'nodejs_version_info',
+        'process_cpu_seconds_total',
+        'process_cpu_system_seconds_total',
+        'process_cpu_user_seconds_total',
+        'process_heap_bytes',
+        'process_max_fds',
+        'process_open_fds',
+        'process_resident_memory_bytes',
+        'process_start_time_seconds',
+        'process_virtual_memory_bytes',
+        'registry_requests',
+      ]);
+    });
+  });
 });

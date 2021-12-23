@@ -31,6 +31,10 @@ middlewares:
     ## Optional. Defaults to `false` so make sure to set this to `true` if you want to collect metrics.
     metricsEnabled: true
 
+    ## Optional. Collect default prometheus metrics. Defaults to `false`.
+    ## Refer to: https://github.com/siimon/prom-client/tree/v14.0.1#default-metrics
+    collectDefaultMetrics: false
+
     ## Optional. Defaults to `/-/metrics`.
     metricsPath: /custom/path/metrics
 
