@@ -85,3 +85,28 @@ middlewares:
 | `@apollo/client`                  | scoped        |
 | `react`                           | other         |
 | `apollo-server-express`           | other         |
+
+
+## Contributing
+This project enforces the [Angular commit message format](https://github.com/angular/angular/blob/13.1.1/CONTRIBUTING.md#-commit-message-format).
+
+A [husky](https://typicode.github.io/husky/#/) `prepare-commit-msg` hook is used in conjunction with
+[commitzen](https://github.com/commitizen/cz-cli) in order to automatically prompt for all required fields in the
+commit message. The `commitzen` prompts can be bypassed and the commit message may still manually be created by
+interrupting the `commitzen` prompt using `ctrl+c`. A valid commit message is still required as each commit message
+is linted using [commitlint](https://commitlint.js.org/#/) and a [husky](https://typicode.github.io/husky/#/)
+`commit-msg` hook to ensure the [Angular commit message format](https://github.com/angular/angular/blob/13.1.1/CONTRIBUTING.md#-commit-message-format)
+is followed.
+
+## Pull Requests
+Prior to opening a pull request, please ensure that you run the command:
+```bash
+npm run release
+```
+This will automatically increment the version number in the `package.json` based on the types of commits contained in
+the pull request and update the `CHANGELOG.md` appropriately. If a specific version type needs to be forced, the same
+command can be executed with an argument passed:
+```bash
+# force incrementing to a new major version
+npm run release -- -r major
+```
