@@ -32,9 +32,7 @@
   },
   "scripts": {
     "prepare": "husky install",
-    "build": "npm run build:types && npm run build:js",
-    "build:js": "babel src/ --out-dir lib --extensions \".ts,.tsx\"",
-    "build:types": "tsc --emitDeclarationOnly",
+    "build": "tsc",
     "test": "npm run lint && npm run unitTest",
     "unitTest": "jest",
     "lint": "eslint \"**/*.{js,ts}\""
@@ -48,7 +46,6 @@
     "@types/jest": "27.0.3",
     "@types/node": "17.0.4",
     "@typescript-eslint/eslint-plugin": "5.8.0",
-    "@verdaccio/babel-preset": "10.0.0",
     "@verdaccio/eslint-config": "10.0.0",
     "@verdaccio/types": "10.1.0",
     "chance": "1.1.8",
@@ -59,6 +56,7 @@
     "jest": "27.4.5",
     "jest-junit": "13.0.0",
     "prettier": "2.5.1",
+    "ts-jest": "27.1.2",
     "typescript": "4.5.4"
   }
 }
