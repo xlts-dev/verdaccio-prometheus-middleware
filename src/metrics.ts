@@ -27,7 +27,7 @@ export default class VerdaccioMiddlewarePlugin implements IPluginMiddleware<Metr
   private requestsCounter = new Counter(REQUEST_COUNTER_OPTIONS);
 
   public constructor(config: MetricsConfig, options: PluginOptions<MetricsConfig>) {
-    this.metricsEnabled = [true, 'true'].includes(config.enabled);
+    this.metricsEnabled = [true, 'true'].includes(config.metricsEnabled);
     this.metricsPath = config.metricsPath || '/-/metrics';
     this.packageGroups = config.packageGroups || [];
     this.logger = options.logger;

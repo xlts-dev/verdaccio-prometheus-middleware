@@ -1,7 +1,7 @@
 import { Config } from '@verdaccio/types';
 
 export interface MetricsConfig extends Config {
-  enabled: boolean;
+  metricsEnabled: boolean;
   metricsPath: string;
   packageGroups: Record<string, string>;
 }

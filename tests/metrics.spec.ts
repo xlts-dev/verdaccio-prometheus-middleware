@@ -30,7 +30,7 @@ describe('Metrics Plugin', () => {
     beforeAll(() => {
       register.clear();
       const metricsPlugin = new MetricsPlugin(
-        { enabled: true } as MetricsConfig,
+        { metricsEnabled: true } as MetricsConfig,
         { logger } as PluginOptions<MetricsConfig>
       );
       metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
@@ -48,7 +48,7 @@ describe('Metrics Plugin', () => {
     beforeAll(() => {
       register.clear();
       const metricsPlugin = new MetricsPlugin(
-        { enabled: false } as MetricsConfig,
+        { metricsEnabled: false } as MetricsConfig,
         { logger } as PluginOptions<MetricsConfig>
       );
       metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
@@ -69,7 +69,7 @@ describe('Metrics Plugin', () => {
     beforeAll(() => {
       register.clear();
       const metricsPlugin = new MetricsPlugin(
-        { enabled: true } as MetricsConfig,
+        { metricsEnabled: true } as MetricsConfig,
         { logger: getLogger() } as PluginOptions<MetricsConfig>
       );
       metricsPlugin.collectMetrics(req, res, next);
@@ -111,7 +111,7 @@ describe('Metrics Plugin', () => {
     beforeAll(() => {
       register.clear();
       metricsPlugin = new MetricsPlugin(
-        { enabled: true } as MetricsConfig,
+        { metricsEnabled: true } as MetricsConfig,
         { logger: getLogger() } as PluginOptions<MetricsConfig>
       );
       expressMocks.forEach(({ req, res, next }) => metricsPlugin.collectMetrics(req, res, next));
@@ -163,7 +163,7 @@ describe('Metrics Plugin', () => {
     beforeAll(() => {
       register.clear();
       metricsPlugin = new MetricsPlugin(
-        { enabled: true, packageGroups } as MetricsConfig,
+        { metricsEnabled: true, packageGroups } as MetricsConfig,
         { logger: getLogger() } as PluginOptions<MetricsConfig>
       );
       expressMocks.forEach(({ req, res, next }) => metricsPlugin.collectMetrics(req, res, next));
