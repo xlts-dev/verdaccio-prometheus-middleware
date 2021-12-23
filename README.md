@@ -29,7 +29,7 @@ Complete configuration example:
 middlewares:
   metrics:
     ## Optional. Defaults to `false` so make sure to set this to `true` if you want to collect metrics.
-    enabled: true
+    metricsEnabled: true
 
     ## Optional. Defaults to `/-/metrics`.
     metricsPath: /custom/path/metrics
@@ -64,7 +64,7 @@ Given the following example configuration:
 # Verdaccio config file
 middlewares:
   metrics:
-    enabled: true
+    metricsEnabled: true
     packageGroups:
       '@babel[/]plugin': 'babel-plugin'
       'babel[-]plugin': 'babel-plugin'
