@@ -91,7 +91,7 @@ export default class VerdaccioMiddlewarePlugin implements IPluginMiddleware<Metr
 
     // We won't know the final status code until the response is sent to the client. Because of this we don't collect
     // the metrics for this request until the response 'finish' event is emitted.
-    res.once('finish', () => {
+    res.once('close', () => {
       const { statusCode } = res;
       const metricLabels: MetricsLabels = { username, userAgentName, statusCode };
       if (packageGroup) {

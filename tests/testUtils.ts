@@ -95,7 +95,7 @@ export function generateMockResponse() {
     status: jest.fn(),
     send: jest.fn(),
     once: jest.fn().mockImplementation(function (eventName, handler: any) {
-      if (eventName === 'finish') {
+      if (eventName === 'close') {
         mockResponse.statusCode = 200;
         mockResponse.finish.mockImplementation(handler);
       }
