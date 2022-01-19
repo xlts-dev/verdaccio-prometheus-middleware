@@ -44,7 +44,7 @@ export default class VerdaccioMiddlewarePlugin implements IPluginMiddleware<Metr
   public register_middlewares(
     app: Application,
     auth: IBasicAuth<MetricsConfig>,
-    storage: IStorageManager<MetricsConfig>
+    storage: IStorageManager<MetricsConfig>,
   ): void {
     if (this.metricsEnabled) {
       this.logger.info(`metrics: [register_middlewares] metrics are enabled and exposed at '${this.metricsPath}'`);
@@ -99,7 +99,7 @@ export default class VerdaccioMiddlewarePlugin implements IPluginMiddleware<Metr
       }
       this.logger.info(
         { decodedPath, authType, userAgentString, userAgentVersion, ...metricLabels },
-        'metrics: [collectMetrics] response metrics collected'
+        'metrics: [collectMetrics] response metrics collected',
       );
       // @ts-ignore: The type definitions for `labels` are not great so ignore the TypeScript error.
       this.requestsCounter.labels(metricLabels).inc(1);

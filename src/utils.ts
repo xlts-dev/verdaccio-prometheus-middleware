@@ -20,7 +20,7 @@ export enum AuthType {
  */
 export function getUsername(
   logger: Logger,
-  authHeader: string | null | undefined
+  authHeader: string | null | undefined,
 ): { username: string; authType: string | undefined } {
   if (!authHeader || typeof authHeader !== 'string' || !authHeader.length) {
     logger.debug({ authHeader }, 'metrics: [getUsername] authorization header string is not present or is invalid');
@@ -62,12 +62,12 @@ export function getUsername(
  */
 export function getUserAgentData(
   logger: Logger,
-  userAgentHeader: string | null | undefined
+  userAgentHeader: string | null | undefined,
 ): { userAgentName: string; userAgentVersion: string | undefined } {
   if (!userAgentHeader || typeof userAgentHeader !== 'string' || !userAgentHeader.length) {
     logger.debug(
       { userAgentHeader },
-      'metrics: [getUserAgentData] user agent header string is not present or is invalid'
+      'metrics: [getUserAgentData] user agent header string is not present or is invalid',
     );
     return { userAgentName: UNKNOWN, userAgentVersion: undefined };
   }
