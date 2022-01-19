@@ -55,7 +55,7 @@ interface MockRequestParams {
 
 export function generateMockRequest(
   { authType, username, userAgentString, httpMethod, path }: MockRequestParams = getRequestOptions(),
-  invalidAuth = false
+  invalidAuth = false,
 ) {
   const authHeader = (() => {
     switch (true) {
@@ -80,7 +80,7 @@ export function generateMockRequest(
       // @ts-ignore
       const headers = Object.entries(this.headers).reduce(
         (acc, [header, value]) => ({ ...acc, [header.toLowerCase()]: value }),
-        {}
+        {},
       );
       return headers[headerName.toLowerCase()];
     },

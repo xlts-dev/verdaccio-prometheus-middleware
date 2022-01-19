@@ -31,7 +31,7 @@ describe('Metrics Plugin', () => {
       register.clear();
       const metricsPlugin = new MetricsPlugin(
         { metricsEnabled: true } as MetricsConfig,
-        { logger } as PluginOptions<MetricsConfig>
+        { logger } as PluginOptions<MetricsConfig>,
       );
       metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
     });
@@ -49,7 +49,7 @@ describe('Metrics Plugin', () => {
       register.clear();
       const metricsPlugin = new MetricsPlugin(
         { metricsEnabled: false } as MetricsConfig,
-        { logger } as PluginOptions<MetricsConfig>
+        { logger } as PluginOptions<MetricsConfig>,
       );
       metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
     });
@@ -70,7 +70,7 @@ describe('Metrics Plugin', () => {
       register.clear();
       const metricsPlugin = new MetricsPlugin(
         { metricsEnabled: true } as MetricsConfig,
-        { logger: getLogger() } as PluginOptions<MetricsConfig>
+        { logger: getLogger() } as PluginOptions<MetricsConfig>,
       );
       metricsPlugin.collectMetrics(req, res, next);
       metricsPlugin.getMetrics(req, res);
@@ -87,7 +87,7 @@ describe('Metrics Plugin', () => {
           '# HELP registry_requests HTTP requests made to the registry',
           '# TYPE registry_requests counter',
           'registry_requests{username="UNKNOWN",userAgentName="UNKNOWN",statusCode="200"} 1\n',
-        ].join('\n')
+        ].join('\n'),
       );
     });
   });
@@ -112,7 +112,7 @@ describe('Metrics Plugin', () => {
       register.clear();
       metricsPlugin = new MetricsPlugin(
         { metricsEnabled: true } as MetricsConfig,
-        { logger: getLogger() } as PluginOptions<MetricsConfig>
+        { logger: getLogger() } as PluginOptions<MetricsConfig>,
       );
       expressMocks.forEach(({ req, res, next }) => metricsPlugin.collectMetrics(req, res, next));
     });
@@ -131,7 +131,7 @@ describe('Metrics Plugin', () => {
           { value: 2, labels: { userAgentName: UNKNOWN, username: username1, statusCode: 200 } },
           { value: 1, labels: { userAgentName: 'Artifactory', username: username2, statusCode: 200 } },
           { value: 1, labels: { userAgentName: 'npm', username: username2, statusCode: 200 } },
-        ])
+        ]),
       );
     });
   });
@@ -156,7 +156,7 @@ describe('Metrics Plugin', () => {
       getExpressMocks(getRequestOptions({ username: username1, path: `/non-scoped-${chance.word()}` })),
       getExpressMocks(getRequestOptions({ username: username2, path: `/${chance.word()}`, ...userAgentNpm })),
       getExpressMocks(
-        getRequestOptions({ username: username2, path: `/@scoped/${chance.word}`, ...userAgentArtifactory })
+        getRequestOptions({ username: username2, path: `/@scoped/${chance.word}`, ...userAgentArtifactory }),
       ),
     ];
 
@@ -164,7 +164,7 @@ describe('Metrics Plugin', () => {
       register.clear();
       metricsPlugin = new MetricsPlugin(
         { metricsEnabled: true, packageGroups } as MetricsConfig,
-        { logger: getLogger() } as PluginOptions<MetricsConfig>
+        { logger: getLogger() } as PluginOptions<MetricsConfig>,
       );
       expressMocks.forEach(({ req, res, next }) => metricsPlugin.collectMetrics(req, res, next));
     });
@@ -204,7 +204,7 @@ describe('Metrics Plugin', () => {
             value: 1,
             labels: { username: username2, userAgentName: 'Artifactory', packageGroup: 'other', statusCode: 200 },
           },
-        ])
+        ]),
       );
     });
   });
@@ -217,7 +217,7 @@ describe('Metrics Plugin', () => {
       register.clear();
       const metricsPlugin = new MetricsPlugin(
         { metricsEnabled: true, collectDefaultMetrics: true } as MetricsConfig,
-        { logger: getLogger() } as PluginOptions<MetricsConfig>
+        { logger: getLogger() } as PluginOptions<MetricsConfig>,
       );
       metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
       metricsPlugin.collectMetrics(req, res, next);
