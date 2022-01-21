@@ -1,56 +1,52 @@
-import chanceJs from 'chance';
+import * as chanceJs from 'chance';
 import { register } from 'prom-client';
 import { Application } from 'express';
 import { IBasicAuth, IStorageManager, PluginOptions } from '@verdaccio/types';
 
-import MetricsPlugin, { REQUEST_COUNTER_OPTIONS } from '../src';
+import MetricsPlugin, { DEFAULT_METRICS_PATH } from '../src';
 import { MetricsConfig } from '../src/types';
 import { AuthType, UNKNOWN } from '../src/utils';
 
-// @ts-ignore
-import { getExpressMocks, getRequestOptions, getLogger } from './testUtils';
-
+import { getExpressMocks, getRequestOptions, getLogger, getPackageMetricsJson } from './testUtils';
 const chance = chanceJs();
 
-const getMetricsJson = (values) => [
-  {
-    aggregator: 'sum',
-    help: REQUEST_COUNTER_OPTIONS.help,
-    name: REQUEST_COUNTER_OPTIONS.name,
-    type: 'counter',
-    values,
-  },
-];
-
-describe('Metrics Plugin', () => {
-  describe('should register middleware (metrics enabled)', () => {
+describe('Package Download Metrics', () => {
+  describe('should register middleware (package download metrics enabled)', () => {
     const logger = getLogger();
+    const metricName = chance.word();
     const app = { get: jest.fn() } as unknown as Application;
 
     beforeAll(() => {
       register.clear();
       const metricsPlugin = new MetricsPlugin(
-        { metricsEnabled: true } as MetricsConfig,
+        { packageMetrics: { enabled: true, metricName } } as MetricsConfig,
         { logger } as PluginOptions<MetricsConfig>,
       );
       metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
     });
 
+    test('should use the provided custom metric name', async () => {
+      const metrics = await register.getMetricsAsJSON();
+      expect(metrics.length).toEqual(1);
+      expect(metrics[0].name).toEqual(metricName);
+    });
+
     test('should invoke the correct express API calls', () => {
+      const mock = (app.get as jest.MockedFn<jest.MockableFunction>).mock;
       expect(app.get).toHaveBeenCalledTimes(2);
+      expect(mock.calls[0][0]).toEqual(/.*[.]tgz$/i);
+      expect(mock.calls[1][0]).toEqual(DEFAULT_METRICS_PATH);
     });
   });
 
-  describe('should register middleware (metrics disabled)', () => {
+  describe('should register middleware (package download metrics disabled)', () => {
     const logger = getLogger();
     const app = { get: jest.fn() } as unknown as Application;
+    const metricsConfig = { packageMetrics: { enabled: false } } as MetricsConfig;
 
     beforeAll(() => {
       register.clear();
-      const metricsPlugin = new MetricsPlugin(
-        { metricsEnabled: false } as MetricsConfig,
-        { logger } as PluginOptions<MetricsConfig>,
-      );
+      const metricsPlugin = new MetricsPlugin(metricsConfig, { logger } as PluginOptions<MetricsConfig>);
       metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
     });
 
@@ -59,20 +55,46 @@ describe('Metrics Plugin', () => {
     });
 
     test('should log warn that metrics are disabled', () => {
-      expect(logger.warn).toHaveBeenCalledWith('metrics: [register_middlewares] metrics are disabled');
+      expect(logger.warn).toHaveBeenCalledWith(metricsConfig, 'metrics: [register_middlewares] metrics are disabled');
     });
   });
 
-  describe('should use express APIs to provide a valid metrics response', () => {
+  describe('should not record metrics for HTTP HEAD requests', () => {
+    const app = { get: jest.fn() } as unknown as Application;
+    const { req, res, next } = getExpressMocks(getRequestOptions({ httpMethod: 'HEAD' }));
+
+    beforeAll(() => {
+      register.clear();
+      const metricsPlugin = new MetricsPlugin(
+        { packageMetrics: { enabled: true } } as MetricsConfig,
+        { logger: getLogger() } as PluginOptions<MetricsConfig>,
+      );
+      metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
+      metricsPlugin.collectPackageMetrics(req, res, next);
+      metricsPlugin.getMetrics(req, res);
+    });
+    test('should invoke the correct express API calls', () => {
+      expect(next).toHaveBeenCalledTimes(1);
+    });
+
+    test('should not have collected any metrics', async () => {
+      const metrics = await register.getMetricsAsJSON();
+      expect(metrics).toEqual(getPackageMetricsJson([]));
+    });
+  });
+
+  describe('should provide a valid Prometheus text format response', () => {
+    const app = { get: jest.fn() } as unknown as Application;
     const { req, res, next } = getExpressMocks();
 
     beforeAll(() => {
       register.clear();
       const metricsPlugin = new MetricsPlugin(
-        { metricsEnabled: true } as MetricsConfig,
+        { packageMetrics: { enabled: true } } as MetricsConfig,
         { logger: getLogger() } as PluginOptions<MetricsConfig>,
       );
-      metricsPlugin.collectMetrics(req, res, next);
+      metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
+      metricsPlugin.collectPackageMetrics(req, res, next);
       metricsPlugin.getMetrics(req, res);
     });
 
@@ -84,9 +106,9 @@ describe('Metrics Plugin', () => {
       expect(res.send).toHaveBeenCalledTimes(1);
       expect(res.send).toHaveBeenCalledWith(
         [
-          '# HELP registry_requests HTTP requests made to the registry',
-          '# TYPE registry_requests counter',
-          'registry_requests{username="UNKNOWN",userAgentName="UNKNOWN",statusCode="200"} 1\n',
+          '# HELP registry_package_downloads Count of package downloads from the registry',
+          '# TYPE registry_package_downloads counter',
+          'registry_package_downloads{username="UNKNOWN",userAgentName="UNKNOWN",statusCode="200"} 1\n',
         ].join('\n'),
       );
     });
@@ -94,6 +116,7 @@ describe('Metrics Plugin', () => {
 
   describe('should collect metrics when `packageGroups` are NOT defined', () => {
     let metricsPlugin;
+    const app = { get: jest.fn() } as unknown as Application;
     const [username1, username2] = chance.n(chance.word, 2);
     const [userAgentArtifactory, userAgentNpm] = [
       { userAgentName: 'Artifactory', userAgentVersion: '7.1.1' },
@@ -111,10 +134,11 @@ describe('Metrics Plugin', () => {
     beforeAll(() => {
       register.clear();
       metricsPlugin = new MetricsPlugin(
-        { metricsEnabled: true } as MetricsConfig,
+        { packageMetrics: { enabled: true } } as MetricsConfig,
         { logger: getLogger() } as PluginOptions<MetricsConfig>,
       );
-      expressMocks.forEach(({ req, res, next }) => metricsPlugin.collectMetrics(req, res, next));
+      metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
+      expressMocks.forEach(({ req, res, next }) => metricsPlugin.collectPackageMetrics(req, res, next));
     });
 
     test('should invoke the correct express API calls', () => {
@@ -123,10 +147,10 @@ describe('Metrics Plugin', () => {
       });
     });
 
-    test('should not collect any metrics', async () => {
+    test('should collect metrics', async () => {
       const metrics = await register.getMetricsAsJSON();
       expect(metrics).toEqual(
-        getMetricsJson([
+        getPackageMetricsJson([
           { value: 2, labels: { userAgentName: UNKNOWN, username: UNKNOWN, statusCode: 200 } },
           { value: 2, labels: { userAgentName: UNKNOWN, username: username1, statusCode: 200 } },
           { value: 1, labels: { userAgentName: 'Artifactory', username: username2, statusCode: 200 } },
@@ -138,14 +162,15 @@ describe('Metrics Plugin', () => {
 
   describe('should collect metrics when `packageGroups` are defined', () => {
     let metricsPlugin;
+    const app = { get: jest.fn() } as unknown as Application;
     const [username1, username2] = chance.n(chance.word, 2);
     const [userAgentArtifactory, userAgentNpm] = [
       { userAgentName: 'Artifactory', userAgentVersion: '7.1.1' },
       { userAgentName: 'npm', userAgentVersion: '8.2.3' },
     ];
     const packageGroups = {
-      '@scoped[/]test-package[^/]*9[.]1[.]x': 'test-package-9.1.x',
-      '@scoped[/]test-package': 'test-package',
+      '@scoped/test-package[^/]*9[.]1[.]x': 'test-package-9.1.x',
+      '@scoped/test-package': 'test-package',
       'non-scoped': 'non-scoped',
       '.*': 'other',
     } as Record<string, string>;
@@ -163,10 +188,11 @@ describe('Metrics Plugin', () => {
     beforeAll(() => {
       register.clear();
       metricsPlugin = new MetricsPlugin(
-        { metricsEnabled: true, packageGroups } as MetricsConfig,
+        { packageMetrics: { enabled: true, packageGroups } } as MetricsConfig,
         { logger: getLogger() } as PluginOptions<MetricsConfig>,
       );
-      expressMocks.forEach(({ req, res, next }) => metricsPlugin.collectMetrics(req, res, next));
+      metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
+      expressMocks.forEach(({ req, res, next }) => metricsPlugin.collectPackageMetrics(req, res, next));
     });
 
     test('should invoke the correct express API calls', () => {
@@ -175,10 +201,10 @@ describe('Metrics Plugin', () => {
       });
     });
 
-    test('should not collect any metrics', async () => {
+    test('should collect metrics', async () => {
       const metrics = await register.getMetricsAsJSON();
       expect(metrics).toEqual(
-        getMetricsJson([
+        getPackageMetricsJson([
           {
             value: 2,
             labels: { username: UNKNOWN, userAgentName: UNKNOWN, packageGroup: 'test-package', statusCode: 200 },
@@ -206,58 +232,6 @@ describe('Metrics Plugin', () => {
           },
         ]),
       );
-    });
-  });
-
-  describe('should collect default prometheus metrics when `collectDefaultMetrics` is set to `true`', () => {
-    const { req, res, next } = getExpressMocks();
-    const app = { get: jest.fn() } as unknown as Application;
-
-    beforeAll(() => {
-      register.clear();
-      const metricsPlugin = new MetricsPlugin(
-        { metricsEnabled: true, collectDefaultMetrics: true } as MetricsConfig,
-        { logger: getLogger() } as PluginOptions<MetricsConfig>,
-      );
-      metricsPlugin.register_middlewares(app, {} as IBasicAuth<MetricsConfig>, {} as IStorageManager<MetricsConfig>);
-      metricsPlugin.collectMetrics(req, res, next);
-      metricsPlugin.getMetrics(req, res);
-    });
-
-    test('should collect default prometheus metrics', async () => {
-      const metrics = await register.getMetricsAsJSON();
-      expect(metrics.map(({ name }) => name).sort()).toEqual([
-        'nodejs_active_handles',
-        'nodejs_active_handles_total',
-        'nodejs_active_requests',
-        'nodejs_active_requests_total',
-        'nodejs_eventloop_lag_max_seconds',
-        'nodejs_eventloop_lag_mean_seconds',
-        'nodejs_eventloop_lag_min_seconds',
-        'nodejs_eventloop_lag_p50_seconds',
-        'nodejs_eventloop_lag_p90_seconds',
-        'nodejs_eventloop_lag_p99_seconds',
-        'nodejs_eventloop_lag_seconds',
-        'nodejs_eventloop_lag_stddev_seconds',
-        'nodejs_external_memory_bytes',
-        'nodejs_gc_duration_seconds',
-        'nodejs_heap_size_total_bytes',
-        'nodejs_heap_size_used_bytes',
-        'nodejs_heap_space_size_available_bytes',
-        'nodejs_heap_space_size_total_bytes',
-        'nodejs_heap_space_size_used_bytes',
-        'nodejs_version_info',
-        'process_cpu_seconds_total',
-        'process_cpu_system_seconds_total',
-        'process_cpu_user_seconds_total',
-        'process_heap_bytes',
-        'process_max_fds',
-        'process_open_fds',
-        'process_resident_memory_bytes',
-        'process_start_time_seconds',
-        'process_virtual_memory_bytes',
-        'registry_requests',
-      ]);
     });
   });
 });

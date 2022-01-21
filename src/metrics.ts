@@ -1,110 +1,61 @@
 import { collectDefaultMetrics, register, Counter } from 'prom-client';
-import { Logger, IPluginMiddleware, IBasicAuth, IStorageManager, PluginOptions } from '@verdaccio/types';
-import { Request, Response, NextFunction, Application } from 'express';
+import { PackageMetricsLabels, RequestMetricsLabels } from './types';
 
-import { MetricsConfig, MetricsLabels } from './types';
-import { getUsername, getUserAgentData } from './utils';
+interface MetricOptions {
+  defaultMetricsEnabled: boolean;
+  requestMetricsEnabled: boolean;
+  requestMetricsName?: string;
+  packageMetricsEnabled: boolean;
+  packageMetricsName?: string;
+}
 
-export const REQUEST_COUNTER_OPTIONS = {
-  name: 'registry_requests',
-  help: 'HTTP requests made to the registry',
-  // Remember that every unique combination of key-value label pairs represents a new time series, which can
-  // dramatically increase the amount of data stored. Refer to: https://prometheus.io/docs/practices/naming/#labels
-  labelNames: ['username', 'userAgentName', 'statusCode', 'packageGroup'],
-};
+export const DEFAULT_METRIC_NAME_REQUESTS = 'registry_http_requests';
+export const DEFAULT_METRIC_NAME_PACKAGE_DOWNLOADS = 'registry_package_downloads';
+export const CONTENT_TYPE_METRICS = register.contentType;
 
-/**
- * A Verdaccio middleware plugin implementation. If enabled the following functionality is added:
- *   1. A single new metrics endpoint is exposed at a configurable path.
- *   2. Metrics are collected related only to install/download of package tarballs.
- * Refer to: https://verdaccio.org/docs/plugin-middleware/
- */
-export default class VerdaccioMiddlewarePlugin implements IPluginMiddleware<MetricsConfig> {
-  public logger: Logger;
-  public metricsEnabled: boolean;
-  public collectDefaultMetrics: boolean;
-  public metricsPath: string;
-  public packageGroups: Record<string, string>;
-  private requestsCounter = new Counter(REQUEST_COUNTER_OPTIONS);
+// Remember that every unique combination of key-value label pairs represents a new time series, which can
+// dramatically increase the amount of data stored. Refer to: https://prometheus.io/docs/practices/naming/#labels
+export class Metrics {
+  private readonly requestCounter: Counter<string> | null = null;
+  private readonly packageCounter: Counter<string> | null = null;
 
-  public constructor(config: MetricsConfig, options: PluginOptions<MetricsConfig>) {
-    this.metricsEnabled = [true, 'true'].includes(config.metricsEnabled);
-    this.collectDefaultMetrics = [true, 'true'].includes(config.collectDefaultMetrics);
-    this.metricsPath = config.metricsPath || '/-/metrics';
-    this.packageGroups = config.packageGroups || {};
-    this.logger = options.logger;
-  }
-
-  /**
-   * This is the function that Verdaccio invokes when the appropriate configuration is present to use this plugin.
-   * @param {Application} app - The Express application object.
-   * @param {IBasicAuth<MetricsConfig>} auth - The Verdaccio authentication service.
-   * @param {IStorageManager<MetricsConfig>} storage -The Verdaccio storage manager service.
-   */
-  public register_middlewares(
-    app: Application,
-    auth: IBasicAuth<MetricsConfig>,
-    storage: IStorageManager<MetricsConfig>,
-  ): void {
-    if (this.metricsEnabled) {
-      this.logger.info(`metrics: [register_middlewares] metrics are enabled and exposed at '${this.metricsPath}'`);
-      app.get(/.*[.]tgz$/i, this.collectMetrics.bind(this));
-      app.get(this.metricsPath, this.getMetrics.bind(this));
-      if (this.collectDefaultMetrics) {
-        collectDefaultMetrics();
-      }
-    } else {
-      this.logger.warn('metrics: [register_middlewares] metrics are disabled');
+  constructor({
+    defaultMetricsEnabled,
+    requestMetricsEnabled,
+    requestMetricsName,
+    packageMetricsEnabled,
+    packageMetricsName,
+  }: MetricOptions) {
+    defaultMetricsEnabled && collectDefaultMetrics();
+    if (requestMetricsEnabled) {
+      this.requestCounter = new Counter<string>({
+        name: requestMetricsName || DEFAULT_METRIC_NAME_REQUESTS,
+        help: 'Count of HTTP requests made to the registry',
+        labelNames: ['username', 'userAgentName', 'statusCode', 'httpMethod'] as const,
+      });
+    }
+    if (packageMetricsEnabled) {
+      this.packageCounter = new Counter<string>({
+        name: packageMetricsName || DEFAULT_METRIC_NAME_PACKAGE_DOWNLOADS,
+        help: 'Count of package downloads from the registry',
+        labelNames: ['username', 'userAgentName', 'statusCode', 'packageGroup'] as const,
+      });
     }
   }
 
-  /**
-   * Express callback function that responds to requests at the metrics path.
-   * @param {Request} req - The Express request object.
-   * @param {Response} res - The Express response object.
-   * @returns {Promise<void>} - A promise that resolves to undefined since the function is async.
-   */
-  public async getMetrics(req: Request, res: Response): Promise<void> {
-    this.logger.debug(`metrics: [getMetrics] providing metrics response`);
-    res.setHeader('Content-Type', register.contentType);
-    res.status(200);
-    res.send(await register.metrics());
+  incrementRequestCounter(labels: RequestMetricsLabels) {
+    this.requestCounter && this.requestCounter.labels(labels).inc(1);
+  }
+
+  incrementPackageDownloadCounter(labels: PackageMetricsLabels) {
+    this.packageCounter && this.packageCounter.labels(labels).inc(1);
   }
 
   /**
-   * Express middleware function responsible for collecting metrics on requests to install/download a package.
-   * @param {Request} req - The Express request object.
-   * @param {Response} res - The Express response object.
-   * @param {NextFunction} next - A function that invokes the next Express middleware function succeeding this one.
-   * @returns {Promise<void>} - A promise that resolves to undefined since the function is async.
+   * Get the metrics response body.
+   * @return {Promise<string>} - The metrics response body.
    */
-  public collectMetrics(req: Request, res: Response, next: NextFunction): void {
-    const { path } = req;
-
-    const authorization = req.header('authorization');
-    const userAgentString = req.header('user-agent');
-    const decodedPath = decodeURIComponent(path);
-    const { authType, username } = getUsername(this.logger, authorization);
-    const { userAgentName, userAgentVersion } = getUserAgentData(this.logger, userAgentString);
-    const [, packageGroup] =
-      Object.entries(this.packageGroups).find(([regex]: [string, string]) => new RegExp(regex).test(decodedPath)) || [];
-
-    // We won't know the final status code until the response is sent to the client. Because of this we don't collect
-    // the metrics for this request until the response 'finish' event is emitted.
-    res.once('close', () => {
-      const { statusCode } = res;
-      const metricLabels: MetricsLabels = { username, userAgentName, statusCode };
-      if (packageGroup) {
-        metricLabels.packageGroup = packageGroup;
-      }
-      this.logger.info(
-        { decodedPath, authType, userAgentString, userAgentVersion, ...metricLabels },
-        'metrics: [collectMetrics] response metrics collected',
-      );
-      // @ts-ignore: The type definitions for `labels` are not great so ignore the TypeScript error.
-      this.requestsCounter.labels(metricLabels).inc(1);
-    });
-
-    next();
+  getMetricsResponse() {
+    return register.metrics();
   }
 }
