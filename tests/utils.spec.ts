@@ -1,4 +1,4 @@
-import chanceJs from 'chance';
+import * as chanceJs from 'chance';
 
 import { AuthType, getUserAgentData, getUsername, UNKNOWN } from '../src/utils';
 
@@ -50,7 +50,11 @@ const usernameTestCases = [
   { username: UNKNOWN, authType: undefined, authHeader: null },
   { username: UNKNOWN, authType: undefined, authHeader: chance.word() },
   { username: UNKNOWN, authType: undefined, authHeader: `Bearer ${chance.word()}.${chance.word()}.${chance.word()}` },
-  { username: UNKNOWN, authType: undefined, authHeader: `Basic ${chance.word()}` },
+  {
+    username: UNKNOWN,
+    authType: undefined,
+    authHeader: `Basic ${chance.word({ length: chance.integer({ min: 10, max: 50 }) })}`,
+  },
   { username: 'user_bearer', authType: AuthType.jwt, authHeader: generateMockBearerAuth('user_bearer') },
   { username: 'user_basic', authType: AuthType.password, authHeader: generateMockBasicAuth('user_basic') },
 ];

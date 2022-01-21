@@ -5,10 +5,8 @@
     "declaration": true,
     "noImplicitAny": false,
     "strict": true,
-    "rootDir": "src",
     "outDir": "lib",
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
     "typeRoots": ["./node_modules/@verdaccio/types/lib/verdaccio", "./node_modules/@types"]
   },
   "include": ["src/**/*.ts"]

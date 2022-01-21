@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/ban-types,@typescript-eslint/no-explicit-any,no-invalid-this */
-import chanceJs from 'chance';
+import * as chanceJs from 'chance';
 import { Logger } from '@verdaccio/types';
 import { Request, Response, NextFunction } from 'express';
 
 import { AuthType } from '../src/utils';
+import { DEFAULT_METRIC_NAME_PACKAGE_DOWNLOADS, DEFAULT_METRIC_NAME_REQUESTS } from '../src';
 
 const chance = chanceJs();
 
@@ -19,12 +20,32 @@ export const getLogger = (): Logger => ({
   trace: jest.fn(),
 });
 
+export const getRequestMetricsJson = (values, name = DEFAULT_METRIC_NAME_REQUESTS) => [
+  {
+    aggregator: 'sum',
+    help: 'Count of HTTP requests made to the registry',
+    name,
+    type: 'counter',
+    values,
+  },
+];
+
+export const getPackageMetricsJson = (values, name = DEFAULT_METRIC_NAME_PACKAGE_DOWNLOADS) => [
+  {
+    aggregator: 'sum',
+    help: 'Count of package downloads from the registry',
+    name,
+    type: 'counter',
+    values,
+  },
+];
+
 interface MockRequestOptions {
   authType?: AuthType;
   username?: string;
   userAgentName?: string;
   userAgentVersion?: string;
-  httpMethod?: string;
+  httpMethod?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD';
   path?: string;
 }
 
