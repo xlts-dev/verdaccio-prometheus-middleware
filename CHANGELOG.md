@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### 2.0.1 (2022-02-08)
+
+### Documentation
+
+- minor doc and code comment updates, update regenerate CHANGELOG for accuracy
+
+### Build
+
+- add `prepublishOnly` script to ensure that the source files are transpiled using the typescript compiler to the lib folder prior to publishing
+
 ## 2.0.0 (2022-02-03)
 
 ### ⚠ BREAKING CHANGES
