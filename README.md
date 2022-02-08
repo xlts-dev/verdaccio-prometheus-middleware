@@ -105,12 +105,12 @@ middlewares:
       ## Optional. Defaults to `false`. Make sure to set this to `true` if you want to collect default metrics.
       enabled: true
 
-    ## Optional. If not specified, no package download metrics will be collected.
+    ## Optional. If not specified, no http request metrics will be collected.
     requestMetrics:
       ## Optional. Defaults to `false`. Make sure to set this to `true` if you want to collect request metrics.
       enabled: true
 
-      ## Optional. Defaults to 'verdaccio_package_downloads'.
+      ## Optional. Defaults to 'registry_http_requests'.
       metricName: 'registry_http_requests'
 
       ## Optional. An array of regular expressions used to match and exclude request paths. The default list of paths to
@@ -127,7 +127,7 @@ middlewares:
       ## Optional. Defaults to `false`. Make sure to set this to `true` if you want to collect package download metrics.
       enabled: true
 
-      ## Optional. Defaults to 'verdaccio_package_downloads'.
+      ## Optional. Defaults to 'registry_package_downloads'.
       metricName: 'registry_package_downloads'
 
       ## Optional. A map of regular expressions to package grouping names.
