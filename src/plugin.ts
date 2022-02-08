@@ -14,9 +14,11 @@ export const DEFAULT_EXCLUDED_PATHS = [
 ];
 
 /**
- * A Verdaccio middleware plugin implementation. If enabled the following functionality is added:
+ * A Verdaccio middleware plugin implementation. The following functionality is added if enabled in configuration:
  *   1. A single new metrics endpoint is exposed at a configurable path.
- *   2. Metrics are collected related only to install/download of package tarballs.
+ *   2. Metrics are collected related to install/download of package tarballs.
+ *   3. Metrics are collected related to every http request.
+ *   4. Prometheus default metrics are collected.
  * Refer to: https://verdaccio.org/docs/plugin-middleware/
  */
 export default class VerdaccioMiddlewarePlugin implements IPluginMiddleware<MetricsConfig> {
@@ -112,7 +114,7 @@ export default class VerdaccioMiddlewarePlugin implements IPluginMiddleware<Metr
     }
 
     // We won't know the final status code until the response is sent to the client. Because of this we don't collect
-    // the metrics for this request until the response 'finish' event is emitted.
+    // the metrics for this request until the response 'close' event is emitted.
     res.once('close', () => {
       const { statusCode } = res;
       const metricLabels: RequestMetricsLabels = { httpMethod, username, userAgentName, statusCode };
@@ -146,7 +148,7 @@ export default class VerdaccioMiddlewarePlugin implements IPluginMiddleware<Metr
       Object.entries(this.packageGroups).find(([regex]: [string, string]) => new RegExp(regex).test(decodedPath)) || [];
 
     // We won't know the final status code until the response is sent to the client. Because of this we don't collect
-    // the metrics for this request until the response 'finish' event is emitted.
+    // the metrics for this request until the response 'close' event is emitted.
     res.once('close', () => {
       const { statusCode } = res;
       const metricLabels: PackageMetricsLabels = { username, userAgentName, statusCode };
