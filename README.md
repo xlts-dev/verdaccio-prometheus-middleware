@@ -76,7 +76,7 @@ FROM node:lts-alpine as builder
 # Install the metrics middleware plugin
 RUN mkdir -p /verdaccio/plugins \
     && cd /verdaccio/plugins \
-    && npm install --global-style --no-bin-links --no-optional @xlts.dev/verdaccio-prometheus-middleware@1.0.0
+    && npm install --global-style --no-bin-links --omit=optional @xlts.dev/verdaccio-prometheus-middleware@1.0.0
 
 # The final built image will be based on the standard Verdaccio docker image.
 FROM verdaccio/verdaccio:5.2.0
