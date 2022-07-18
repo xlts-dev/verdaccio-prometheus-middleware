@@ -1,5 +1,4 @@
 module.exports = {
-  name: 'verdaccio-prometheus-middleware',
   verbose: true,
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.ts', '!src/index.ts', '!src/types/*'],
